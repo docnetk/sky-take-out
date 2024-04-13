@@ -27,7 +27,7 @@
                 update_time = #{updateTime},
             </if>
         </set>
-        where;
+        where id = #{id};
     </update>
     <select id="pageQuery" resultType="com.sky.entity.Employee">
         select * from employee

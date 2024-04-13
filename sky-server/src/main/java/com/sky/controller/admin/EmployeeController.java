@@ -12,12 +12,10 @@ import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -93,6 +91,20 @@ public class EmployeeController {
     public Result updateStatus(@PathVariable Integer status, Long id) {
         log.info("修改状态: {}, {}", id, status);
         employeeService.updateStatus(status, id);
+        return Result.success();
+    }
+
+    @ApiOperation("根据Id查询员工")
+    @GetMapping("/{id}")
+    public Result<Employee> getById(@PathVariable Long id) {
+        Employee employee = employeeService.getById(id);
+        return Result.success(employee);
+    }
+
+    @ApiOperation("编辑员工信息")
+    @PutMapping
+    public Result updateEmp(@RequestBody EmployeeDTO employeeDTO) {
+        employeeService.updateEmp(employeeDTO);
         return Result.success();
     }
 }
