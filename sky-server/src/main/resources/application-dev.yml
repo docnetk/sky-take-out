@@ -6,3 +6,12 @@ sky:
     database: sky_take_out
     username: root
     password: sa123
+
+  qiniu:
+    access-key: UGuqU07O1J71UDSYgOfPjynvfvPtPB_8D1Z-NIw6
+    secret-key: c00CCXvrNYhYZ5lvpjeiKPG5J2oEgMLFTVO6Wy4E
+    bucket-name: sky12
+    domain-name: http://sbvkjhths.hd-bkt.clouddn.com/
+
+
+
