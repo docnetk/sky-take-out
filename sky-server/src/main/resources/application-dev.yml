@@ -13,5 +13,8 @@ sky:
     bucket-name: sky12
     domain-name: http://sbvkjhths.hd-bkt.clouddn.com/
 
+  redis:
+    host: 192.168.88.128
+    port: 6379
 
 
