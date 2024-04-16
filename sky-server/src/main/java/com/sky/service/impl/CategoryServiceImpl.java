@@ -8,6 +8,8 @@ import com.sky.context.BaseContext;
 import com.sky.dto.CategoryDTO;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
+import com.sky.entity.Dish;
+import com.sky.exception.BaseException;
 import com.sky.exception.DeletionNotAllowedException;
 import com.sky.mapper.CategoryMapper;
 import com.sky.mapper.DishMapper;
@@ -30,8 +32,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
     @Autowired
     private DishMapper dishMapper;
+
     @Autowired
     private SetmealMapper setmealMapper;
 
@@ -112,11 +116,17 @@ public class CategoryServiceImpl implements CategoryService {
      * @param id
      */
     public void startOrStop(Integer status, Long id) {
+        // 如果有在售的菜品（在售的套餐包含在售菜品）属于该分类则不能停售
+        if (StatusConstant.DISABLE.equals(status)) {
+            Dish dish = Dish.builder().categoryId(id).status(StatusConstant.ENABLE).build();
+            List<Dish> dishes = dishMapper.selectByCategoryIdOrStatus(dish);
+            if (dishes != null && !dishes.isEmpty()) {
+                throw new BaseException(MessageConstant.CATEGORY_BE_RELATED_ON_SALE_DISH);
+            }
+        }
         Category category = Category.builder()
                 .id(id)
                 .status(status)
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
                 .build();
         categoryMapper.update(category);
     }

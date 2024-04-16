@@ -35,4 +35,6 @@ public interface DishMapper {
 
     @AutoFill(OperationType.UPDATE)
     void update(Dish dish);
+
+    List<Dish> selectByCategoryIdOrStatus(Dish dish);
 }
