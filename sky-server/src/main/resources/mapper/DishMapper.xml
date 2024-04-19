@@ -39,13 +39,13 @@
                 LEFT JOIN category c ON d.category_id = c.id
         <where>
             <if test="name != null and name != ''">
-                name like concat('%', #{name}, %)
+                d.name like concat('%', #{name}, '%')
             </if>
             <if test="categoryId != null">
-                and category_id = #{categoryId}
+                and d.category_id = #{categoryId}
             </if>
             <if test="status != null">
-                and status = #{status}
+                and d.status = #{status}
             </if>
         </where>
     </select>

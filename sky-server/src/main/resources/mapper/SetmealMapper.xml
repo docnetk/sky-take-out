@@ -60,10 +60,9 @@
     <select id="list" resultType="com.sky.entity.Setmeal">
         select *
         from setmeal
-        select * from setmeal
         <where>
             <if test="name != null">
-                and name like concat('%',#{name},'%')
+                name like concat('%',#{name},'%')
             </if>
             <if test="categoryId != null">
                 and category_id = #{categoryId}

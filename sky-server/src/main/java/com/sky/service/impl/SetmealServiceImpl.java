@@ -20,6 +20,9 @@ import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "Setmeal", key = "#setmealDTO.categoryId")
     public void save(SetmealDTO setmealDTO) {
         // 将套餐信息保存至套餐表
         Setmeal setmeal = Setmeal.builder().categoryId(setmealDTO.getCategoryId())
@@ -72,6 +76,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "Setmeal", allEntries = true)
     public void deleteBatch(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return;
@@ -106,6 +111,7 @@ public class SetmealServiceImpl implements SetmealService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "Setmeal", allEntries = true)
     public void update(SetmealDTO setmealDTO) {
         // 先修改套餐的基本信息
         Setmeal setmeal = new Setmeal();
@@ -123,6 +129,7 @@ public class SetmealServiceImpl implements SetmealService {
     }
 
     @Override
+    @CacheEvict(value = "Setmeal", allEntries = true)
     public void modifyStatus(Integer status, Long id) {
         if (StatusConstant.ENABLE.equals(status)) {
             // 起售套餐, 需要先判断是否套餐包含的菜品是否已停售
@@ -138,13 +145,12 @@ public class SetmealServiceImpl implements SetmealService {
         setmealMapper.update(setmeal);
     }
 
+    @Cacheable(value = "Setmeal", key = "#setmeal.categoryId")
     public List<Setmeal> list(Setmeal setmeal) {
-        List<Setmeal> list = setmealMapper.list(setmeal);
-        return list;
+        return setmealMapper.list(setmeal);
     }
 
     /**
-
      * 根据id查询菜品选项
      * @param id
      * @return
