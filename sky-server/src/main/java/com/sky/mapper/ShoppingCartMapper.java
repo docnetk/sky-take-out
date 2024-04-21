@@ -19,7 +19,7 @@ public interface ShoppingCartMapper {
 
     /**
      * 清除某用户购物车下的所有商品
-     * @param userId 用户id
+     * @param shoppingCart 购物车
      */
     void delete(ShoppingCart shoppingCart);
 

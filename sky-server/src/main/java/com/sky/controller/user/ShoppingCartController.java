@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("user/shoppingCart")
+@RequestMapping("/user/shoppingCart")
 public class ShoppingCartController {
     @Autowired
     private ShoppingCartService shoppingCartService;
@@ -33,6 +33,7 @@ public class ShoppingCartController {
 
     @DeleteMapping("/clean")
     public Result<Object> cleanShoppingCart() {
+        System.out.println("调用/user/shoppingCart，清空购物车");
         shoppingCartService.deleteShoppingCart();
         return Result.success();
     }
