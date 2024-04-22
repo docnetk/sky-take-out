@@ -5,9 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -17,8 +15,10 @@ import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import org.apache.commons.lang.text.StrBuilder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -250,8 +250,120 @@ public class OrderServiceImpl implements OrderService {
         PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
         Page<Orders> orders = orderMapper.pageQuery(ordersPageQueryDTO);
 
+        List<OrderVO> orderVOS = new ArrayList<>();
+        for (Orders order : orders) {
+            OrderVO orderVO = new OrderVO();
+            BeanUtils.copyProperties(order, orderVO);
+            String orderDishesString = getOrderDishesString(order);
+            orderVO.setOrderDishes(orderDishesString);
+            orderVOS.add(orderVO);
+        }
+        return new PageResult(orders.getTotal(), orderVOS);
+    }
 
-        return null;
+    @Override
+    public OrderStatisticsVO statisticsOrder() {
+        OrderStatisticsVO statisticsVO = new OrderStatisticsVO();
+        List<Orders> confirmedCount = orderMapper.selectByStatus(Orders.CONFIRMED);
+        if (confirmedCount != null) {
+            statisticsVO.setConfirmed(confirmedCount.size());
+        }
+
+        List<Orders> list = orderMapper.selectByStatus(Orders.DELIVERY_IN_PROGRESS);
+        if (list != null) {
+            statisticsVO.setDeliveryInProgress(list.size());
+        }
+
+        list = orderMapper.selectByStatus(Orders.TO_BE_CONFIRMED);
+        if (list != null) {
+            statisticsVO.setDeliveryInProgress(list.size());
+        }
+        return statisticsVO;
+    }
+
+    @Override
+    public void receiveOrder(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (orders != null) {
+            if (Orders.TO_BE_CONFIRMED.equals(orders.getStatus())) {
+                orders.setStatus(Orders.CONFIRMED);
+                orderMapper.update(orders);
+            }
+        }
+    }
+
+    @Override
+    public void rejectOrder(OrdersRejectionDTO rejectionDTO) {
+        Orders order = orderMapper.selectById(rejectionDTO.getId());
+        if (order != null) {
+            if (Orders.TO_BE_CONFIRMED.equals(order.getStatus())) {
+                order.setRejectionReason(rejectionDTO.getRejectionReason());
+                order.setStatus(Orders.CANCELLED);
+                order.setCancelTime(LocalDateTime.now());
+            } else {
+                throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+            }
+            if (Orders.PAID.equals(order.getPayStatus())) {
+                // 需要退款，未来保险做一个判断
+                order.setPayStatus(Orders.REFUND);
+            }
+            orderMapper.update(order);
+        }
+    }
+
+    @Override
+    public void cancelOrderByAdmin(OrdersCancelDTO ordersCancelDTO) {
+        Orders order = orderMapper.selectById(ordersCancelDTO.getId());
+        if (order != null) {
+            if (Orders.PAID.equals(order.getStatus())) {
+                // 为用户退款
+                System.out.println(LocalDateTime.now() + "  退款成功!");
+            }
+            order.setStatus(Orders.CANCELLED);
+            order.setCancelReason(ordersCancelDTO.getCancelReason());
+            order.setCancelTime(LocalDateTime.now());
+
+            orderMapper.update(order);
+        }
+    }
+
+    @Override
+    public void delivery(Long id) {
+        Orders order = orderMapper.selectById(id);
+        if (order != null) {
+            if (Orders.CONFIRMED.equals(order.getStatus())) {
+                order.setStatus(Orders.DELIVERY_IN_PROGRESS);
+
+                orderMapper.update(order);
+            } else {
+                throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+            }
+        }
+    }
+
+    @Override
+    public void completeOrder(Long id) {
+        Orders order = orderMapper.selectById(id);
+        if (order != null) {
+            if (Orders.DELIVERY_IN_PROGRESS.equals(order.getStatus())) {
+                order.setStatus(Orders.COMPLETED);
+                order.setDeliveryTime(LocalDateTime.now());
+
+                orderMapper.update(order);
+            } else {
+                throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+            }
+        }
+    }
+
+    private String getOrderDishesString(Orders order) {
+        List<OrderDetail> orderDetails = orderDetailMapper.selectByOrderId(order.getId());
+        StrBuilder strBuilder = new StrBuilder();
+        for (OrderDetail orderDetail : orderDetails) {
+            String s = orderDetail.getName() + "* " + orderDetail.getNumber()+ ";";
+            strBuilder.append(s);
+        }
+        return strBuilder.toString();
     }
 
     

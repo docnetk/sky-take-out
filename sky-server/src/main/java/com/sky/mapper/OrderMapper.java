@@ -34,4 +34,7 @@ public interface OrderMapper {
     Orders selectById(Long id);
 
     Page<Orders> pageQuery(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    @Select("select * from orders where status=#{status}")
+    List<Orders> selectByStatus(Integer status);
 }
