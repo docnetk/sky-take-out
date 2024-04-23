@@ -14,6 +14,7 @@ import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
+import com.sky.utils.WebSocketServer;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
@@ -26,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -44,6 +47,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     @Autowired
     private WeChatPayUtil weChatPayUtil;
@@ -140,6 +146,12 @@ public class OrderServiceImpl implements OrderService {
         orders.setCheckoutTime(LocalDateTime.now());
         orderMapper.updateStatus(orders);
 
+        // 通知商家接单
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 1);
+        map.put("orderId", orders.getId());
+        map.put("content", "订单号：" + orders.getNumber());
+        webSocketServer.sendToAllClient(JSONObject.toJSONString(map));
         return vo;
     }
 
@@ -356,6 +368,21 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    public void reminder(Long id) {
+        Orders order = orderMapper.selectById(id);
+        if (order == null || !Orders.TO_BE_CONFIRMED.equals(order.getStatus())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 2);
+        map.put("orderId", order.getId());
+        map.put("content", "订单号：" + order.getNumber());
+
+        webSocketServer.sendToAllClient(JSONObject.toJSONString(map));
+    }
+
     private String getOrderDishesString(Orders order) {
         List<OrderDetail> orderDetails = orderDetailMapper.selectByOrderId(order.getId());
         StrBuilder strBuilder = new StrBuilder();
@@ -366,5 +393,4 @@ public class OrderServiceImpl implements OrderService {
         return strBuilder.toString();
     }
 
-    
 }
