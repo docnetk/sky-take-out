@@ -65,4 +65,33 @@
         </where>
     </select>
 
+    <select id="countOrder" resultType="java.lang.Integer">
+        select count(*)
+        from orders
+        <where>
+            <if test="begin != null">order_time &gt; #{begin}</if>
+            <if test="end != null">and order_time &lt; #{end}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="getSalesTop10" resultType="com.sky.dto.GoodsSalesDTO">
+        SELECT
+            od.`name` AS name,
+            sum( od.`number` ) AS number
+        FROM
+            orders o
+                LEFT JOIN order_detail od ON o.id = od.order_id
+        WHERE
+            o.order_time BETWEEN #{pre}
+                AND #{next}
+          AND o.STATUS = 5
+        GROUP BY
+            od.NAME
+        ORDER BY
+            number DESC
+        LIMIT 0,
+            10
+    </select>
+
 </mapper>
