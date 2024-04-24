@@ -44,10 +44,13 @@ public interface OrderMapper {
     @Select("select * from orders where status = #{status} and order_time <= #{time}")
     List<Orders> selectByCondition(Integer status, LocalDateTime time);
 
-    @Select("select sum(orders.amount) from orders where status=#{status} and order_time between #{begin} and #{end}")
+
     Double turnover(Map<String, Object> map);
 
     Integer countOrder(Map<String, Object> map);
 
     List<GoodsSalesDTO> getSalesTop10(LocalDateTime pre, LocalDateTime next);
+
+    Integer countByMap(Map map);
+
 }
